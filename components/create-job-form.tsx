@@ -42,6 +42,7 @@ interface PreviewData {
   laws: Array<{
     title: string
     identifier: string
+    articleCount?: number | null
   }>
 }
 
@@ -117,18 +118,28 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
   }
 
   const handleConfirmJob = async () => {
-    if (!pendingJobData || selectedLaws.size === 0) return
+    if (!pendingJobData || selectedLaws.size === 0 || !previewData) return
 
     setShowPreview(false)
     setIsLoading(true)
     setError('')
 
     try {
+      // Get full law data for selected identifiers
+      const selectedLawData = previewData.laws
+        .filter(law => selectedLaws.has(law.identifier))
+        .map(law => ({
+          title: law.title,
+          identifier: law.identifier,
+          articleCount: law.articleCount,
+        }))
+
       const result = await scraperApi.createJob({
         searchInput: pendingJobData.searchInput,
         maxLaws: pendingJobData.maxLaws === '' ? undefined : Number(pendingJobData.maxLaws),
         email: pendingJobData.email === '' ? undefined : pendingJobData.email,
         selectedIdentifiers: Array.from(selectedLaws),
+        selectedLaws: selectedLawData,
       })
 
       if (result.success) {
@@ -268,7 +279,14 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
                     htmlFor={`law-${law.identifier}`}
                     className="flex-1 cursor-pointer"
                   >
-                    <div className="font-medium">{index + 1}. {law.title}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{index + 1}. {law.title}</span>
+                      {law.articleCount != null && (
+                        <span className="text-xs text-muted-foreground shrink-0 bg-muted px-2 py-0.5 rounded">
+                          {law.articleCount} {law.articleCount === 1 ? 'article' : 'articles'}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">{law.identifier}</div>
                   </label>
                 </div>

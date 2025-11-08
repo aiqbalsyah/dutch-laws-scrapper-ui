@@ -21,6 +21,10 @@ export interface Job {
   processedLawTitles: string[];
   results?: any;
   errors: Array<{ node?: string; error: string }>;
+  options?: {
+    selectedIdentifiers?: string[] | null;
+    selectedLaws?: Array<{ title: string; identifier: string; articleCount?: number | null }> | null;
+  };
 }
 
 export interface CreateJobRequest {
@@ -28,6 +32,7 @@ export interface CreateJobRequest {
   maxLaws?: number;
   email?: string;
   selectedIdentifiers?: string[];
+  selectedLaws?: Array<{ title: string; identifier: string; articleCount?: number | null }>;
 }
 
 export interface ApiResponse<T> {

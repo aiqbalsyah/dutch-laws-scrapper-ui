@@ -15,6 +15,7 @@ export const scraperApi = {
       authority?: string;
       rechtsgebied?: string[];
       htmlUrl?: string;
+      articleCount?: number | null;
     }>;
   }>> {
     const response = await apiClient.post('/scraper/jobs/preview', data);

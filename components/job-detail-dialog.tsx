@@ -247,6 +247,39 @@ export function JobDetailDialog({ jobId, open, onOpenChange }: JobDetailDialogPr
               </div>
             </div>
 
+            {/* Selected Laws Preview */}
+            {job.options?.selectedLaws && job.options.selectedLaws.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="font-semibold mb-2">
+                    Laws to Scrape ({job.options.selectedLaws.length})
+                  </h3>
+                  <div className="max-h-48 overflow-y-auto border rounded-md p-3 bg-muted/30">
+                    <ul className="space-y-1.5 text-sm">
+                      {job.options.selectedLaws.map((law, i) => (
+                        <li key={law.identifier} className="flex flex-col gap-0.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">
+                              {i + 1}. {law.title}
+                            </span>
+                            {law.articleCount != null && (
+                              <span className="text-xs text-muted-foreground shrink-0 bg-muted px-2 py-0.5 rounded">
+                                {law.articleCount} {law.articleCount === 1 ? 'article' : 'articles'}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground font-mono">
+                            {law.identifier}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Processed Law Titles */}
             {job.processedLawTitles.length > 0 && (
               <>

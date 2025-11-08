@@ -141,6 +141,13 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
             </span>
           </div>
 
+          {job.options?.selectedLaws && job.options.selectedLaws.length > 0 && (
+            <div className="flex justify-between">
+              <span className="font-medium">Selected Laws:</span>
+              <span className="text-muted-foreground">{job.options.selectedLaws.length} law{job.options.selectedLaws.length !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+
           {job.status === 'processing' && (
             <>
               {job.currentLaw && (
