@@ -8,6 +8,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { formatDistanceToNow } from 'date-fns'
 import { JobDetailDialog } from './job-detail-dialog'
 
@@ -19,17 +29,30 @@ interface JobCardProps {
 export function JobCard({ job, onUpdate }: JobCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [showErrorAlert, setShowErrorAlert] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleCancel = async (e: React.MouseEvent) => {
+  const handleCancelClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('Are you sure you want to cancel this job?')) return
+    setShowCancelDialog(true)
+  }
 
+  const handleCancelConfirm = async () => {
     setIsLoading(true)
+    setShowCancelDialog(false)
     try {
       await scraperApi.cancelJob(job.jobId)
+      setSuccessMessage('Job cancelled successfully')
+      setShowSuccessAlert(true)
+      setTimeout(() => setShowSuccessAlert(false), 5000)
       onUpdate?.()
     } catch (err) {
-      alert('Failed to cancel job')
+      setErrorMessage('Failed to cancel job. Please try again.')
+      setShowErrorAlert(true)
+      setTimeout(() => setShowErrorAlert(false), 5000)
     } finally {
       setIsLoading(false)
     }
@@ -40,9 +63,14 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
     setIsLoading(true)
     try {
       await scraperApi.resumeJob(job.jobId)
+      setSuccessMessage('Job resumed successfully')
+      setShowSuccessAlert(true)
+      setTimeout(() => setShowSuccessAlert(false), 5000)
       onUpdate?.()
     } catch (err) {
-      alert('Failed to resume job')
+      setErrorMessage('Failed to resume job. Please try again.')
+      setShowErrorAlert(true)
+      setTimeout(() => setShowErrorAlert(false), 5000)
     } finally {
       setIsLoading(false)
     }
@@ -54,6 +82,8 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
         return 'default'
       case 'failed':
         return 'destructive'
+      case 'cancelled':
+        return 'outline'
       case 'processing':
       case 'scraping':
         return 'secondary'
@@ -62,8 +92,9 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
     }
   }
 
+  // Calculate progress based on processed laws (more accurate than paragraph count)
   const progress = job.totalLaws > 0
-    ? Math.round((job.processedParagraphs / (job.totalLaws * 100)) * 100)
+    ? Math.round((job.processedLaws / job.totalLaws) * 100)
     : 0
 
   return (
@@ -81,6 +112,22 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
           </div>
         </CardHeader>
       <CardContent className="space-y-4">
+        {showSuccessAlert && (
+          <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              ✓ {successMessage}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showErrorAlert && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {errorMessage}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="font-medium">Status:</span>
@@ -104,15 +151,22 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
               )}
 
               <div className="flex justify-between">
-                <span className="font-medium">Progress:</span>
-                <span className="text-muted-foreground">{job.processedParagraphs} paragraphs</span>
+                <span className="font-medium">Laws:</span>
+                <span className="text-muted-foreground">
+                  {job.processedLaws} / {job.totalLaws} completed
+                </span>
               </div>
 
-              {progress > 0 && (
+              <div className="flex justify-between">
+                <span className="font-medium">Paragraphs:</span>
+                <span className="text-muted-foreground">{job.processedParagraphs} processed</span>
+              </div>
+
+              {job.totalLaws > 0 && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Completion</span>
-                    <span className="text-muted-foreground">{Math.min(progress, 100)}%</span>
+                    <span className="text-muted-foreground">Law Progress</span>
+                    <span className="text-muted-foreground">{progress}%</span>
                   </div>
                   <Progress value={Math.min(progress, 100)} />
                 </div>
@@ -157,7 +211,7 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
         <div className="flex gap-2">
           {(job.status === 'processing' || job.status === 'pending') && (
             <Button
-              onClick={handleCancel}
+              onClick={handleCancelClick}
               disabled={isLoading}
               variant="destructive"
               size="sm"
@@ -166,7 +220,7 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
             </Button>
           )}
 
-          {job.status === 'failed' && (
+          {job.status === 'paused' && (
             <Button
               onClick={handleResume}
               disabled={isLoading}
@@ -185,6 +239,24 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
       open={showDetails}
       onOpenChange={setShowDetails}
     />
+
+    <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel Job?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this job for &quot;{job.searchInput}&quot;?
+            This action cannot be undone. All progress will be lost.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>No, keep running</AlertDialogCancel>
+          <AlertDialogAction onClick={handleCancelConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Yes, cancel job
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   )
 }

@@ -8,7 +8,7 @@ const SCRAPER_API = config.apiBaseUrl
 // GET /api/scraper/jobs/[jobId] - Get job by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
     const session = await getSession()
@@ -16,7 +16,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await axios.get(`${SCRAPER_API}/api/jobs/${params.jobId}`)
+    const { jobId } = await params
+    const response = await axios.get(`${SCRAPER_API}/api/jobs/${jobId}`)
     return NextResponse.json(response.data)
   } catch (error) {
     if (axios.isAxiosError(error)) {

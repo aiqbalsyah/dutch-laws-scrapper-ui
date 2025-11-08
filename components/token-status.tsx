@@ -18,6 +18,7 @@ export function TokenStatus() {
   const [errorDetails, setErrorDetails] = useState<any>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [showErrorDetails, setShowErrorDetails] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
 
   const fetchTokenStatus = async () => {
@@ -45,12 +46,17 @@ export function TokenStatus() {
     setIsRefreshing(true)
     setError('')
     setErrorDetails(null)
+    setShowSuccess(false)
 
     try {
       const result = await tokenApi.refreshToken()
 
       if (result.success) {
         await fetchTokenStatus()
+        setShowSuccess(true)
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => setShowSuccess(false), 5000)
       } else {
         // Show detailed error message from API
         const errorMsg = result.message || result.error || 'Failed to refresh token'
@@ -162,6 +168,17 @@ export function TokenStatus() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {showSuccess && (
+          <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              <p className="font-medium">✓ Token Refreshed Successfully!</p>
+              <p className="text-sm mt-1">
+                Your Mavim access token has been renewed and will expire in ~{tokenData?.minutes_until_expiry} minutes.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertDescription>
