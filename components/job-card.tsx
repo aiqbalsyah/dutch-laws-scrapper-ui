@@ -142,9 +142,23 @@ export function JobCard({ job, onUpdate }: JobCardProps) {
           </div>
 
           {job.options?.selectedLaws && job.options.selectedLaws.length > 0 && (
-            <div className="flex justify-between">
-              <span className="font-medium">Selected Laws:</span>
-              <span className="text-muted-foreground">{job.options.selectedLaws.length} law{job.options.selectedLaws.length !== 1 ? 's' : ''}</span>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="font-medium">Selected Laws:</span>
+                <span className="text-muted-foreground">{job.options.selectedLaws.length} law{job.options.selectedLaws.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="pl-2 space-y-0.5 max-h-24 overflow-y-auto">
+                {job.options.selectedLaws.slice(0, 3).map((law, i) => (
+                  <div key={law.identifier} className="text-xs text-muted-foreground">
+                    {i + 1}. {law.title}
+                  </div>
+                ))}
+                {job.options.selectedLaws.length > 3 && (
+                  <div className="text-xs text-muted-foreground italic">
+                    + {job.options.selectedLaws.length - 3} more...
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
