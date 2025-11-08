@@ -13,7 +13,7 @@ export const scraperApi = {
     return response.data;
   },
 
-  async getAllJobs(params?: { status?: string; limit?: number }): Promise<ApiResponse<{ jobs: Job[]; count: number }>> {
+  async getAllJobs(params?: { status?: string; limit?: number }): Promise<{ success: boolean; jobs?: Job[]; count?: number; message?: string; error?: string }> {
     const response = await apiClient.get('/scraper/jobs', { params });
     return response.data;
   },
