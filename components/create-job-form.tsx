@@ -8,8 +8,19 @@ import { createJobSchema, CreateJobInput } from '@/lib/validations/job-schemas'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   Form,
   FormControl,
@@ -24,9 +35,23 @@ interface CreateJobFormProps {
   onJobCreated?: () => void
 }
 
+interface PreviewData {
+  searchTerm: string
+  totalLaws: number
+  willProcess: number
+  laws: Array<{
+    title: string
+    identifier: string
+  }>
+}
+
 export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null)
+  const [pendingJobData, setPendingJobData] = useState<CreateJobInput | null>(null)
+  const [selectedLaws, setSelectedLaws] = useState<Set<string>>(new Set())
   const { data: session } = useSession()
 
   const form = useForm<CreateJobInput>({
@@ -43,14 +68,74 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
     setIsLoading(true)
 
     try {
-      const result = await scraperApi.createJob({
+      // First, get preview
+      const preview = await scraperApi.previewJob({
         searchInput: data.searchInput,
         maxLaws: data.maxLaws === '' ? undefined : Number(data.maxLaws),
-        email: data.email === '' ? undefined : data.email,
+      })
+
+      if (preview.success && preview.data) {
+        // Show preview dialog and select all laws by default
+        setPreviewData(preview.data)
+        setPendingJobData(data)
+        const allIdentifiers = new Set(preview.data.laws.map(law => law.identifier))
+        setSelectedLaws(allIdentifiers)
+        setShowPreview(true)
+      } else {
+        setError(preview.message || 'Failed to fetch preview')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const toggleLawSelection = (identifier: string) => {
+    setSelectedLaws(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(identifier)) {
+        newSet.delete(identifier)
+      } else {
+        newSet.add(identifier)
+      }
+      return newSet
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (!previewData) return
+
+    if (selectedLaws.size === previewData.laws.length) {
+      // Deselect all
+      setSelectedLaws(new Set())
+    } else {
+      // Select all
+      const allIdentifiers = new Set(previewData.laws.map(law => law.identifier))
+      setSelectedLaws(allIdentifiers)
+    }
+  }
+
+  const handleConfirmJob = async () => {
+    if (!pendingJobData || selectedLaws.size === 0) return
+
+    setShowPreview(false)
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const result = await scraperApi.createJob({
+        searchInput: pendingJobData.searchInput,
+        maxLaws: pendingJobData.maxLaws === '' ? undefined : Number(pendingJobData.maxLaws),
+        email: pendingJobData.email === '' ? undefined : pendingJobData.email,
+        selectedIdentifiers: Array.from(selectedLaws),
       })
 
       if (result.success) {
         form.reset()
+        setPreviewData(null)
+        setPendingJobData(null)
+        setSelectedLaws(new Set())
         onJobCreated?.()
       } else {
         setError(result.message || result.error || 'Failed to create job')
@@ -142,11 +227,73 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
             />
 
             <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? 'Creating...' : 'Create Job'}
+              {isLoading ? 'Loading Preview...' : 'Preview Job'}
             </Button>
           </form>
         </Form>
       </CardContent>
+
+      {/* Preview Dialog */}
+      <AlertDialog open={showPreview} onOpenChange={setShowPreview}>
+        <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Preview: "{previewData?.searchTerm}"</AlertDialogTitle>
+            <AlertDialogDescription>
+              Found {previewData?.totalLaws} law{previewData?.totalLaws !== 1 ? 's' : ''}.
+              {selectedLaws.size} selected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Select laws to scrape:</div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+              >
+                {selectedLaws.size === previewData?.laws.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+            <div className="max-h-96 overflow-y-auto space-y-2 rounded-md border p-4">
+              {previewData?.laws.map((law, index) => (
+                <div key={law.identifier} className="flex items-start gap-3 text-sm hover:bg-accent/50 p-2 rounded-md">
+                  <Checkbox
+                    id={`law-${law.identifier}`}
+                    checked={selectedLaws.has(law.identifier)}
+                    onCheckedChange={() => toggleLawSelection(law.identifier)}
+                    className="mt-1"
+                  />
+                  <label
+                    htmlFor={`law-${law.identifier}`}
+                    className="flex-1 cursor-pointer"
+                  >
+                    <div className="font-medium">{index + 1}. {law.title}</div>
+                    <div className="text-xs text-muted-foreground">{law.identifier}</div>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowPreview(false)
+              setPreviewData(null)
+              setPendingJobData(null)
+              setSelectedLaws(new Set())
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmJob}
+              disabled={isLoading || selectedLaws.size === 0}
+            >
+              {isLoading ? 'Creating...' : `Create Job (${selectedLaws.size} law${selectedLaws.size !== 1 ? 's' : ''})`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

@@ -1,4 +1,4 @@
-export type JobStatus = 'pending' | 'scraping' | 'processing' | 'completed' | 'failed' | 'paused';
+export type JobStatus = 'pending' | 'scraping' | 'processing' | 'completed' | 'failed' | 'paused' | 'cancelled';
 
 export interface Job {
   jobId: string;
@@ -27,6 +27,7 @@ export interface CreateJobRequest {
   searchInput: string;
   maxLaws?: number;
   email?: string;
+  selectedIdentifiers?: string[];
 }
 
 export interface ApiResponse<T> {

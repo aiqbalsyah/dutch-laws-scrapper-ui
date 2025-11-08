@@ -3,6 +3,24 @@ import { Job, CreateJobRequest, ApiResponse, TokenStatus } from '@/types/job';
 
 // Client-side API that calls Next.js API routes
 export const scraperApi = {
+  async previewJob(data: { searchInput: string; maxLaws?: number }): Promise<ApiResponse<{
+    searchTerm: string;
+    totalLaws: number;
+    willProcess: number;
+    laws: Array<{
+      title: string;
+      identifier: string;
+      modified?: string;
+      issued?: string;
+      authority?: string;
+      rechtsgebied?: string[];
+      htmlUrl?: string;
+    }>;
+  }>> {
+    const response = await apiClient.post('/scraper/jobs/preview', data);
+    return response.data;
+  },
+
   async createJob(data: CreateJobRequest): Promise<ApiResponse<{ jobId: string; status: string; message: string }>> {
     const response = await apiClient.post('/scraper/jobs', data);
     return response.data;
