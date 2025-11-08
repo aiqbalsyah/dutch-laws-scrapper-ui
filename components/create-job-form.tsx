@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/form'
 
 interface CreateJobFormProps {
-  onJobCreated?: () => void
+  onJobCreated?: (jobId: string) => void
 }
 
 interface PreviewData {
@@ -142,12 +142,13 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
         selectedLaws: selectedLawData,
       })
 
-      if (result.success) {
+      if (result.success && result.data) {
+        const jobId = result.data.jobId
         form.reset()
         setPreviewData(null)
         setPendingJobData(null)
         setSelectedLaws(new Set())
-        onJobCreated?.()
+        onJobCreated?.(jobId)
       } else {
         setError(result.message || result.error || 'Failed to create job')
       }
@@ -163,7 +164,7 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
       <CardHeader>
         <CardTitle>Create New Job</CardTitle>
         <CardDescription>
-          Start a new Dutch law scraping job
+          Start a new automation job
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -188,7 +189,7 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
                     />
                   </FormControl>
                   <FormDescription>
-                    Enter the name of the Dutch law to scrape
+                    Enter the name of the Dutch law
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

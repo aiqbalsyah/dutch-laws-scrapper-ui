@@ -39,15 +39,13 @@ export default function DashboardPage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-50">
-                <span className="text-sm font-bold text-white dark:text-zinc-900">DL</span>
+                <span className="text-sm font-bold text-white dark:text-zinc-900">PA</span>
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Dutch Law Scraper
+                  Procestoppers
                 </h1>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {session.user?.role === 'administrator' ? 'Admin Dashboard' : 'Dashboard'}
-                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">App Automations</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

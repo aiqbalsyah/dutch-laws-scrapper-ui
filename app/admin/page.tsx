@@ -2,9 +2,9 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { CreateJobForm } from '@/components/create-job-form'
-import { JobList } from '@/components/job-list'
+import { JobList, JobListRef } from '@/components/job-list'
 import { TokenStatusCompact } from '@/components/token-status-compact'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 export default function AdminPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [refreshKey, setRefreshKey] = useState(0)
+  const jobListRef = useRef<JobListRef>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -42,14 +42,14 @@ export default function AdminPage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-50">
-                <span className="text-sm font-bold text-white dark:text-zinc-900">DL</span>
+                <span className="text-sm font-bold text-white dark:text-zinc-900">PA</span>
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  Dutch Law Scraper
+                  Procestoppers
                 </h1>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Admin Dashboard</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">App Automations</p>
                   <Badge variant="secondary" className="text-xs px-1.5 py-0">Admin</Badge>
                 </div>
               </div>
@@ -78,7 +78,7 @@ export default function AdminPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content Area - Job List */}
           <div className="flex-1 min-w-0">
-            <JobList key={refreshKey} />
+            <JobList ref={jobListRef} />
           </div>
 
           {/* Sticky Sidebar */}
@@ -86,7 +86,7 @@ export default function AdminPage() {
             <div className="sticky top-24">
               {/* Create Job Form */}
               <CreateJobForm
-                onJobCreated={() => setRefreshKey(prev => prev + 1)}
+                onJobCreated={(jobId) => jobListRef.current?.addJob(jobId)}
               />
             </div>
           </aside>

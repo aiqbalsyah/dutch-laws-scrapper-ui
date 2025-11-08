@@ -33,10 +33,10 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-4">
-            Dutch Law Scraper
+            Procestoppers
           </h1>
           <p className="text-xl text-zinc-600 dark:text-zinc-400">
-            Automated scraping and processing of Dutch legislation
+            App Automations
           </p>
         </div>
 
@@ -45,7 +45,7 @@ export default function Home() {
             <CardHeader>
               <CardTitle className="text-lg">Job Management</CardTitle>
               <CardDescription>
-                Create and monitor scraping jobs for Dutch laws
+                Create and monitor automation jobs
               </CardDescription>
             </CardHeader>
             <CardContent>

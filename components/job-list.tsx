@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, forwardRef, useImperativeHandle } from 'react'
 import { Job, JobStatus } from '@/types/job'
 import { scraperApi } from '@/lib/api-client'
 import { JobCard } from './job-card'
@@ -13,7 +13,12 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-export function JobList() {
+export interface JobListRef {
+  addJob: (jobId: string) => Promise<void>
+  refreshJobs: () => Promise<void>
+}
+
+export const JobList = forwardRef<JobListRef>(function JobList(props, ref) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -40,6 +45,41 @@ export function JobList() {
       setIsLoading(false)
     }
   }
+
+  const updateJob = async (jobId: string) => {
+    try {
+      const result = await scraperApi.getJob(jobId)
+      if (result.success && result.job) {
+        setJobs(prevJobs =>
+          prevJobs.map(job =>
+            job.jobId === jobId ? result.job! : job
+          )
+        )
+      }
+    } catch (err) {
+      console.error('Failed to update job:', err)
+      // Fallback to full refetch on error
+      fetchJobs()
+    }
+  }
+
+  const addJobById = async (jobId: string) => {
+    try {
+      const result = await scraperApi.getJob(jobId)
+      if (result.success && result.job) {
+        setJobs(prevJobs => [result.job!, ...prevJobs])
+      }
+    } catch (err) {
+      console.error('Failed to add job:', err)
+      // Fallback to full refetch on error
+      fetchJobs()
+    }
+  }
+
+  useImperativeHandle(ref, () => ({
+    addJob: addJobById,
+    refreshJobs: fetchJobs,
+  }))
 
   useEffect(() => {
     fetchJobs()
@@ -79,10 +119,10 @@ export function JobList() {
       ) : (
         <div className="grid gap-4">
           {jobs.map((job) => (
-            <JobCard key={job.jobId} job={job} onUpdate={fetchJobs} />
+            <JobCard key={job.jobId} job={job} onUpdate={() => updateJob(job.jobId)} />
           ))}
         </div>
       )}
     </div>
   )
-}
+})

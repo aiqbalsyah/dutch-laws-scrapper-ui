@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dutch Law Scraper",
-  description: "A comprehensive Dutch law scraper application",
+  title: "Procestoppers",
+  description: "Procestoppers App Automations",
 };
 
 export default function RootLayout({
