@@ -142,8 +142,9 @@ export function CreateJobForm({ onJobCreated }: CreateJobFormProps) {
         selectedLaws: selectedLawData,
       })
 
-      if (result.success && result.data) {
-        const jobId = result.data.jobId
+      const jobId = result.data?.jobId || result.jobId
+
+      if (result.success && jobId) {
         form.reset()
         setPreviewData(null)
         setPendingJobData(null)

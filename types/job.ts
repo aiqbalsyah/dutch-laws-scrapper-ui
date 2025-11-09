@@ -1,5 +1,29 @@
 export type JobStatus = 'pending' | 'scraping' | 'processing' | 'completed' | 'failed' | 'paused' | 'cancelled';
 
+export interface LawHierarchy {
+  delen: number;
+  hoofdstukken: number;
+  artikelen: number;
+  leden: number;
+}
+
+export interface LawResult {
+  lawTitle: string;
+  lawTopicId: string;
+  lawUrl: string;
+  processedParagraphs: number;
+  hierarchy?: LawHierarchy;
+  errors: Array<{ node?: string; error: string }>;
+}
+
+export interface JobResults {
+  searchTerm: string;
+  totalLaws: number;
+  processedLaws: number;
+  laws: LawResult[];
+  errors: Array<{ law?: string; error: string }>;
+}
+
 export interface Job {
   jobId: string;
   searchInput: string;
@@ -19,7 +43,7 @@ export interface Job {
   currentLaw?: string | null;
   currentLawTopicId?: string | null;
   processedLawTitles: string[];
-  results?: any;
+  results?: JobResults;
   errors: Array<{ node?: string; error: string }>;
   options?: {
     selectedIdentifiers?: string[] | null;
@@ -40,6 +64,9 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  // Direct fields for job creation response
+  jobId?: string;
+  status?: string;
 }
 
 export interface TokenStatus {

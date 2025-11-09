@@ -76,7 +76,7 @@ export function JobDetailDialog({ jobId, open, onOpenChange }: JobDetailDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="!max-w-6xl max-h-[90vh] overflow-y-auto w-[95vw]">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -146,22 +146,22 @@ export function JobDetailDialog({ jobId, open, onOpenChange }: JobDetailDialogPr
             {/* Processing Statistics */}
             <div>
               <h3 className="font-semibold mb-2">Processing Statistics</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground block">Total Laws</span>
-                  <span className="font-semibold text-lg">{job.totalLaws}</span>
+                  <span className="text-muted-foreground block text-xs">Selected Laws</span>
+                  <span className="font-semibold text-2xl">{job.options?.selectedLaws?.length || 0}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block">Scraped Laws</span>
-                  <span className="font-semibold text-lg">{job.scrapedLaws}</span>
+                  <span className="text-muted-foreground block text-xs">Laws Completed</span>
+                  <span className="font-semibold text-2xl">{job.processedLaws}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block">Processed Laws</span>
-                  <span className="font-semibold text-lg">{job.processedLaws}</span>
+                  <span className="text-muted-foreground block text-xs">Total Paragraphs</span>
+                  <span className="font-semibold text-2xl">{job.processedParagraphs}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block">Processed Paragraphs</span>
-                  <span className="font-semibold text-lg">{job.processedParagraphs}</span>
+                  <span className="text-muted-foreground block text-xs">Status</span>
+                  <span className="font-semibold text-sm capitalize">{job.status}</span>
                 </div>
               </div>
             </div>
@@ -280,22 +280,57 @@ export function JobDetailDialog({ jobId, open, onOpenChange }: JobDetailDialogPr
               </>
             )}
 
-            {/* Processed Law Titles */}
-            {job.processedLawTitles.length > 0 && (
+            {/* Processed Law Details with Hierarchy */}
+            {job.results?.laws && job.results.laws.length > 0 && (
               <>
                 <Separator />
                 <div>
                   <h3 className="font-semibold mb-2">
-                    Processed Laws ({job.processedLawTitles.length})
+                    Processed Laws ({job.results.laws.length})
                   </h3>
-                  <div className="max-h-48 overflow-y-auto border rounded-md p-3">
-                    <ul className="space-y-1 text-sm">
-                      {job.processedLawTitles.map((title, i) => (
-                        <li key={i} className="text-muted-foreground">
-                          {i + 1}. {title}
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="max-h-96 overflow-y-auto space-y-3">
+                    {job.results.laws.map((lawResult, i) => (
+                      <div key={i} className="border rounded-md p-3 bg-muted/30 space-y-2">
+                        <div className="font-medium text-sm">
+                          {i + 1}. {lawResult.lawTitle}
+                        </div>
+                        {lawResult.lawTopicId && (
+                          <div className="text-xs text-muted-foreground font-mono">
+                            Topic ID: {lawResult.lawTopicId}
+                          </div>
+                        )}
+                        {lawResult.hierarchy && (
+                          <div className="grid grid-cols-2 gap-2 text-xs mt-2 pt-2 border-t">
+                            <div>
+                              <span className="text-muted-foreground">Delen:</span>{' '}
+                              <span className="font-semibold">{lawResult.hierarchy.delen}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Hoofdstukken:</span>{' '}
+                              <span className="font-semibold">{lawResult.hierarchy.hoofdstukken}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Artikelen:</span>{' '}
+                              <span className="font-semibold">{lawResult.hierarchy.artikelen}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Leden:</span>{' '}
+                              <span className="font-semibold">{lawResult.hierarchy.leden}</span>
+                            </div>
+                          </div>
+                        )}
+                        <div className="text-xs text-muted-foreground">
+                          Paragraphs: {lawResult.processedParagraphs}
+                        </div>
+                        {lawResult.errors && lawResult.errors.length > 0 && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertDescription className="text-xs">
+                              {lawResult.errors.length} error(s) occurred
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </>
